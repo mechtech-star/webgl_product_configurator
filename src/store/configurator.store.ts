@@ -2,6 +2,27 @@ import { create } from 'zustand';
 import * as THREE from 'three';
 import type { ConfigMesh } from '../types/ConfigMesh';
 import type { ConfigMaterial } from '../types/ConfigMaterial';
+import type { AnimationClip } from '../types/ConfigModel';
+
+function detectTextureMaps(material: THREE.Material): Omit<ConfigMaterial, 'id' | 'name' | 'color' | 'ref'> {
+  if (!(material instanceof THREE.MeshStandardMaterial)) {
+    return {
+      hasBaseColorMap: false,
+      hasNormalMap: false,
+      hasRoughnessMap: false,
+      hasMetallicMap: false,
+      hasAmbientOcclusionMap: false,
+    };
+  }
+
+  return {
+    hasBaseColorMap: !!(material.map),
+    hasNormalMap: !!(material.normalMap),
+    hasRoughnessMap: !!(material.roughnessMap),
+    hasMetallicMap: !!(material.metalnessMap),
+    hasAmbientOcclusionMap: !!(material.aoMap),
+  };
+}
 
 export interface ConfiguratorState {
   // Data
@@ -10,6 +31,9 @@ export interface ConfiguratorState {
   scene: THREE.Group | null;
   meshes: ConfigMesh[];
   materials: ConfigMaterial[];
+  animations: AnimationClip[];
+  currentAnimationId: string | null;
+  animationSpeed: number;
   isLoading: boolean;
 
   // Actions
@@ -19,6 +43,9 @@ export interface ConfiguratorState {
   addMaterial: (material: ConfigMaterial) => void;
   setMeshes: (meshes: ConfigMesh[]) => void;
   setMaterials: (materials: ConfigMaterial[]) => void;
+  setAnimations: (animations: AnimationClip[]) => void;
+  setCurrentAnimation: (animationId: string | null) => void;
+  setAnimationSpeed: (speed: number) => void;
   setIsLoading: (loading: boolean) => void;
   toggleMeshVisibility: (meshId: string) => void;
   setMaterialColor: (materialId: string, color: string) => void;
@@ -32,6 +59,9 @@ export const useConfiguratorStore = create<ConfiguratorState>((set) => ({
   scene: null,
   meshes: [],
   materials: [],
+  animations: [],
+  currentAnimationId: null,
+  animationSpeed: 1.0,
   isLoading: false,
 
   // Actions
@@ -52,9 +82,13 @@ export const useConfiguratorStore = create<ConfiguratorState>((set) => ({
     })),
 
   addMaterial: (material) =>
-    set((state) => ({
-      materials: [...state.materials, material],
-    })),
+    set((state) => {
+      const textureMaps = detectTextureMaps(material.ref);
+      const enrichedMaterial = { ...material, ...textureMaps };
+      return {
+        materials: [...state.materials, enrichedMaterial],
+      };
+    }),
 
   setMeshes: (meshes) =>
     set({
@@ -64,6 +98,21 @@ export const useConfiguratorStore = create<ConfiguratorState>((set) => ({
   setMaterials: (materials) =>
     set({
       materials,
+    }),
+
+  setAnimations: (animations) =>
+    set({
+      animations,
+    }),
+
+  setCurrentAnimation: (animationId) =>
+    set({
+      currentAnimationId: animationId,
+    }),
+
+  setAnimationSpeed: (speed) =>
+    set({
+      animationSpeed: speed,
     }),
 
   setIsLoading: (loading) =>
@@ -98,6 +147,9 @@ export const useConfiguratorStore = create<ConfiguratorState>((set) => ({
       scene: null,
       meshes: [],
       materials: [],
+      animations: [],
+      currentAnimationId: null,
+      animationSpeed: 1.0,
       isLoading: false,
     }),
 }));

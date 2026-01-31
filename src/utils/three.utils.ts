@@ -38,33 +38,60 @@ export class ThreeUtils {
     objects: THREE.Object3D[],
     controls?: any,
   ) {
-    let boundingBox = new THREE.Box3();
+    const boundingBox = new THREE.Box3();
 
     objects.forEach((obj) => {
       boundingBox.expandByObject(obj);
     });
 
+    // Check if bounding box is valid
+    if (boundingBox.isEmpty()) {
+      console.warn('Bounding box is empty, using default camera position');
+      camera.position.set(5, 5, 5);
+      camera.lookAt(0, 0, 0);
+      if (controls) {
+        controls.target.set(0, 0, 0);
+        controls.update();
+      }
+      return;
+    }
+
     const size = boundingBox.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const fov = camera.fov * (Math.PI / 180);
-    let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-
-    cameraZ *= 1.5; // Add some padding
-
     const center = boundingBox.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
 
+    // Handle extremely small models
+    const effectiveMaxDim = Math.max(maxDim, 0.1);
+
+    const fov = camera.fov * (Math.PI / 180);
+    let cameraZ = Math.abs(effectiveMaxDim / 2 / Math.tan(fov / 2));
+
+    // Add padding (2x for better view)
+    cameraZ *= 2.5;
+
+    // Position camera at an angle for better 3D perception
+    const distance = cameraZ;
     camera.position.set(
-      center.x + maxDim * 0.3,
-      center.y + maxDim * 0.3,
-      center.z + cameraZ,
+      center.x + distance * 0.5,
+      center.y + distance * 0.5,
+      center.z + distance,
     );
+
+    camera.lookAt(center);
+    camera.updateProjectionMatrix();
 
     if (controls) {
       controls.target.copy(center);
       controls.update();
     }
 
-    camera.lookAt(center);
+    console.log('Camera fitted to model:', {
+      boundingBoxSize: size,
+      center: center,
+      maxDimension: maxDim,
+      cameraDistance: distance,
+      cameraPosition: camera.position,
+    });
   }
 
   /**

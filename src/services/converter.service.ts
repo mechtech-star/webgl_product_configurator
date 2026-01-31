@@ -66,21 +66,154 @@ export class ConverterService {
 
   /**
    * Convert GLTF to GLB
+   * @param arrayBuffer - GLTF JSON or binary file content
+   * @param relatedFiles - Map of related files (bin buffers, textures, etc.) with preserved paths
    */
-  static async gltfToGlb(arrayBuffer: ArrayBuffer): Promise<ArrayBuffer> {
-    // GLTF files already have a standardized format
-    // Just wrap in a scene and export
-    const blob = new Blob([arrayBuffer], { type: 'model/gltf-binary' });
-    const url = URL.createObjectURL(blob);
+  static async gltfToGlb(arrayBuffer: ArrayBuffer, relatedFiles?: Map<string, { arrayBuffer: ArrayBuffer; relativePath?: string }>): Promise<ArrayBuffer> {
+    const gltfLoader = new (await import('three/examples/jsm/loaders/GLTFLoader')).GLTFLoader();
+    
+    // Create object URLs for all related files
+    const fileUrls = new Map<string, string>();
+    const pathIndex = new Map<string, string>(); // Maps expected paths to actual URLs
+    const blobUrls: string[] = [];
 
     try {
-      // Load as binary GLTF
-      const response = await fetch(url);
-      const gltfArrayBuffer = await response.arrayBuffer();
-      return gltfArrayBuffer;
+      // Parse GLTF to extract buffer and image URIs
+      let gltfJson: any = {};
+
+      // Try to parse as JSON GLTF
+      try {
+        const text = new TextDecoder().decode(new Uint8Array(arrayBuffer));
+        if (text.startsWith('{')) {
+          gltfJson = JSON.parse(text);
+        } else if (text.startsWith('\0glTF')) {
+          // GLB format - parse binary header
+          const view = new DataView(arrayBuffer);
+          const jsonLength = view.getUint32(8, true);
+          const jsonArrayBuffer = arrayBuffer.slice(20, 20 + jsonLength);
+          const jsonText = new TextDecoder().decode(new Uint8Array(jsonArrayBuffer));
+          gltfJson = JSON.parse(jsonText);
+        }
+      } catch {
+        // If parse fails, continue without JSON updates
+      }
+
+      // Create blobs and URLs for related files
+      if (relatedFiles) {
+        for (const [fileName, { arrayBuffer: buffer, relativePath }] of relatedFiles) {
+          const mimeType = this.getMimeType(fileName);
+          const blob = new Blob([buffer], { type: mimeType });
+          const url = URL.createObjectURL(blob);
+          fileUrls.set(fileName, url);
+          blobUrls.push(url);
+
+          // Index the file by both its filename and relative path for flexible resolution
+          pathIndex.set(fileName, url);
+          
+          if (relativePath && relativePath !== fileName) {
+            pathIndex.set(relativePath, url);
+            // Also index just the filename from the path
+            const justFileName = relativePath.split('/').pop() || fileName;
+            if (justFileName !== fileName) {
+              pathIndex.set(justFileName, url);
+            }
+          }
+        }
+      }
+
+      // Update GLTF JSON with direct object URLs for buffers and images
+      if (gltfJson.buffers) {
+        for (const buffer of gltfJson.buffers) {
+          if (buffer.uri && !buffer.uri.startsWith('data:')) {
+            const resolvedUrl = this.resolveFileUrl(buffer.uri, pathIndex);
+            if (resolvedUrl) {
+              buffer.uri = resolvedUrl;
+            }
+          }
+        }
+      }
+
+      if (gltfJson.images) {
+        for (const image of gltfJson.images) {
+          if (image.uri && !image.uri.startsWith('data:')) {
+            const resolvedUrl = this.resolveFileUrl(image.uri, pathIndex);
+            if (resolvedUrl) {
+              image.uri = resolvedUrl;
+            }
+          }
+        }
+      }
+
+      // Create updated GLTF blob with modified URIs
+      const gltfBlob = new Blob([JSON.stringify(gltfJson)], { type: 'application/json' });
+      const gltfUrl = URL.createObjectURL(gltfBlob);
+      blobUrls.push(gltfUrl);
+
+      // Load GLTF
+      const gltf = await new Promise<any>((resolve, reject) => {
+        gltfLoader.load(gltfUrl, resolve, undefined, reject);
+      });
+
+      // Export to GLB
+      const exporter = new GLTFExporter();
+      const glbBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+        exporter.parse(
+          gltf.scene,
+          (result: any) => {
+            if (result instanceof ArrayBuffer) {
+              resolve(result);
+            } else {
+              reject(new Error('Export did not return ArrayBuffer'));
+            }
+          },
+          (error: any) => {
+            reject(error);
+          },
+          { binary: true }
+        );
+      });
+
+      return glbBuffer;
     } finally {
-      URL.revokeObjectURL(url);
+      // Clean up all created URLs
+      blobUrls.forEach((url) => URL.revokeObjectURL(url));
     }
+  }
+
+  /**
+   * Resolve file URL from path index
+   */
+  private static resolveFileUrl(path: string, pathIndex: Map<string, string>): string | null {
+    // Check if we have the file indexed by its path
+    if (pathIndex.has(path)) {
+      return pathIndex.get(path) || null;
+    }
+    
+    // Try to extract just the filename and look it up
+    const fileName = path.split('/').pop() || path;
+    if (pathIndex.has(fileName)) {
+      return pathIndex.get(fileName) || null;
+    }
+
+    // Return null if not found
+    return null;
+  }
+
+  /**
+   * Get MIME type for file
+   */
+  private static getMimeType(fileName: string): string {
+    const ext = fileName.toLowerCase().split('.').pop() || '';
+    const mimeTypes: Record<string, string> = {
+      'bin': 'application/octet-stream',
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'webp': 'image/webp',
+      'gif': 'image/gif',
+      'json': 'application/json',
+    };
+    return mimeTypes[ext] || 'application/octet-stream';
   }
 
   /**

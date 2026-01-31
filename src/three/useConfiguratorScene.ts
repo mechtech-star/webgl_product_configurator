@@ -38,22 +38,36 @@ export function useConfiguratorScene() {
 
         // Parse model
         const { meshes, materials } = ModelParser.parse(model);
+        
+        // Parse animations
+        const animations = ModelParser.parseAnimations(gltf.animations || []);
 
         // Store in Zustand
         store.setScene(model);
         store.setMeshes(meshes);
         store.setMaterials(materials);
+        store.setAnimations(animations);
+        
+        // Auto-select first animation if available
+        if (animations.length > 0) {
+          store.setCurrentAnimation(animations[0].id);
+        }
 
         // Add to scene
         scene.add(model);
 
-        // Fit camera
-        const orbitControls = (camera as any).controls;
-        if (orbitControls) {
-          ThreeUtils.fitCameraToObjects(camera as THREE.PerspectiveCamera, [model], orbitControls);
-        } else {
-          ThreeUtils.fitCameraToObjects(camera as THREE.PerspectiveCamera, [model]);
-        }
+        // Force update world matrices for accurate bounding box calculation
+        model.updateMatrixWorld(true);
+
+        // Fit camera with a slight delay to ensure bounding box is computed
+        setTimeout(() => {
+          const orbitControls = (controls as any)?.object?.controls || controls;
+          if (orbitControls) {
+            ThreeUtils.fitCameraToObjects(camera as THREE.PerspectiveCamera, [model], orbitControls);
+          } else {
+            ThreeUtils.fitCameraToObjects(camera as THREE.PerspectiveCamera, [model]);
+          }
+        }, 100);
 
         store.setIsLoading(false);
       } catch (error) {

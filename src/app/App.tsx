@@ -9,13 +9,15 @@ import { TopBar } from '../components/layout/TopBar';
 import { Viewport } from '../components/layout/Viewport';
 import { Inspector } from '../components/layout/Inspector';
 import { FileUploader } from '../components/configurator/FileUploader';
+import { useTheme } from 'next-themes';
 
 function AppContent() {
   const store = useConfiguratorStore();
+  const { theme } = useTheme();
   const hasModel = store.modelUrl !== null;
 
   return (
-    <div className="flex flex-col h-screen bg-card">
+    <div className="flex flex-col h-screen" style={{ backgroundColor: theme === 'dark' ? '#252525' : '#ffffff' }}>
       {/* Top Bar - Always visible */}
       <TopBar />
 
