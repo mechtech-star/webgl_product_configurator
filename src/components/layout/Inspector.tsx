@@ -18,7 +18,7 @@ export function Inspector() {
     const store = useConfiguratorStore();
 
     return (
-        <div className="w-90 bg-card border-l border-border overflow-y-auto rounded-lg shadow-lg m-4 p-4">
+        <div className="w-90 bg-card overflow-y-auto rounded-lg shadow-lg p-4">
             <Accordion type="single" collapsible defaultValue="info">
                 {/* Model Info */}
                 <AccordionItem value="info">

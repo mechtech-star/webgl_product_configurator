@@ -10,7 +10,15 @@ const AccordionItem = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
 >(({ className, ...props }, ref) => (
-  <AccordionPrimitive.Item ref={ref} className={cn("border-b", className)} {...props} />
+  <AccordionPrimitive.Item
+    ref={ref}
+    className={cn(
+      "border-b last:border-b-0",
+      "data-[state=open]:shadow-sm data-[state=open]:rounded-md data-[state=open]:border-transparent",
+      className,
+    )}
+    {...props}
+  />
 ))
 AccordionItem.displayName = "AccordionItem"
 
@@ -22,7 +30,10 @@ const AccordionTrigger = React.forwardRef<
     <AccordionPrimitive.Trigger
       ref={ref}
       className={cn(
-        "flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
+        "flex flex-1 items-center justify-between py-3 text-sm font-medium transition-colors duration-150 rounded-md px-2",
+        "hover:bg-accent/20 hover:text-accent-foreground focus:outline-none focus:bg-accent/25 active:bg-accent/30",
+        // open state styling on the trigger itself for clearer expanded feedback
+        "data-[state=open]:bg-accent/25 data-[state=open]:text-accent-foreground data-[state=open]:font-semibold [&[data-state=open]>svg]:rotate-180",
         className
       )}
       {...props}
@@ -40,7 +51,11 @@ const AccordionContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AccordionPrimitive.Content
     ref={ref}
-    className="overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
+    className={cn(
+      "overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
+      // expanded content visuals: subtle background, padding and rounded bottom corners
+      "data-[state=open]:bg-accent/5 data-[state=open]:px-4 data-[state=open]:py-3 data-[state=open]:rounded-b-md",
+    )}
     {...props}
   />
 ))

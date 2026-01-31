@@ -52,10 +52,16 @@ export function SceneSetup() {
     pointLight.position.set(0, 5, 0);
     scene.add(pointLight);
 
-    // Set up controls
+    // Set up controls (tuned for crisp, responsive interaction)
     const controls = new OrbitControls(camera, gl.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
+    controls.enableDamping = false; // immediate response — disable smoothing
+    controls.dampingFactor = 0;
+    controls.enablePan = true;
+    controls.screenSpacePanning = true;
+    controls.rotateSpeed = 0.9; // slightly faster rotation
+    controls.zoomSpeed = 1.2; // snappier zoom
+    controls.panSpeed = 0.8; // controlled panning
+    controls.enableKeys = true;
     controls.autoRotate = false;
     controls.autoRotateSpeed = 5;
 

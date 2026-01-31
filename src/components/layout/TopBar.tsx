@@ -33,7 +33,7 @@ export function TopBar() {
   };
 
   return (
-    <div className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+    <div className="rounded-lg bg-card px-6 py-3 flex items-center justify-between shadow-lg">
       <div className="flex items-center gap-2">
         <h1 className="text-2xl font-bold text-foreground">Product Configurator</h1>
       </div>

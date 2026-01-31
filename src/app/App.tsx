@@ -17,14 +17,14 @@ function AppContent() {
   const hasModel = store.modelUrl !== null;
 
   return (
-    <div className="flex flex-col h-screen" style={{ backgroundColor: theme === 'dark' ? '#252525' : '#ffffff' }}>
+    <div className="flex flex-col h-screen p-3 space-y-3" style={{ backgroundColor: theme === 'dark' ? '#252525' : '#ffffff' }}>
       {/* Top Bar - Always visible */}
       <TopBar />
 
       {/* Main Content */}
       {hasModel ? (
         // Loaded State: Viewport and Inspector layout
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden gap-3">
           {/* Viewport */}
           <Viewport />
 

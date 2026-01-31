@@ -61,7 +61,7 @@ export function useConfiguratorScene() {
 
         // Fit camera with a slight delay to ensure bounding box is computed
         setTimeout(() => {
-          const orbitControls = (controls as any)?.object?.controls || controls;
+          const orbitControls = (camera as any)?.controls || (controls as any) || undefined;
           if (orbitControls) {
             ThreeUtils.fitCameraToObjects(camera as THREE.PerspectiveCamera, [model], orbitControls);
           } else {
