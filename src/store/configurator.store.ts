@@ -34,7 +34,11 @@ export interface ConfiguratorState {
   animations: AnimationClip[];
   currentAnimationId: string | null;
   animationSpeed: number;
+  animationTime: number;
+  isAnimationPlaying: boolean;
   isLoading: boolean;
+  // Fit camera request trigger (increment to request a fit)
+  fitCameraRequest: number;
 
   // Actions
   setModelUrl: (url: string, name: string) => void;
@@ -46,7 +50,10 @@ export interface ConfiguratorState {
   setAnimations: (animations: AnimationClip[]) => void;
   setCurrentAnimation: (animationId: string | null) => void;
   setAnimationSpeed: (speed: number) => void;
+  toggleAnimationPlayPause: () => void;
+  setAnimationTime: (time: number) => void;
   setIsLoading: (loading: boolean) => void;
+  requestFitCamera: () => void;
   toggleMeshVisibility: (meshId: string) => void;
   setMaterialColor: (materialId: string, color: string) => void;
   reset: () => void;
@@ -62,7 +69,10 @@ export const useConfiguratorStore = create<ConfiguratorState>((set) => ({
   animations: [],
   currentAnimationId: null,
   animationSpeed: 1.0,
+  animationTime: 0,
+  isAnimationPlaying: false,
   isLoading: false,
+  fitCameraRequest: 0,
 
   // Actions
   setModelUrl: (url, name) =>
@@ -115,10 +125,25 @@ export const useConfiguratorStore = create<ConfiguratorState>((set) => ({
       animationSpeed: speed,
     }),
 
+  toggleAnimationPlayPause: () =>
+    set((state) => ({
+      isAnimationPlaying: !state.isAnimationPlaying,
+    })),
+
+  setAnimationTime: (time) =>
+    set({
+      animationTime: time,
+    }),
+
   setIsLoading: (loading) =>
     set({
       isLoading: loading,
     }),
+
+  requestFitCamera: () =>
+    set((state) => ({
+      fitCameraRequest: (state.fitCameraRequest || 0) + 1,
+    })),
 
   toggleMeshVisibility: (meshId) =>
     set((state) => ({
@@ -150,6 +175,8 @@ export const useConfiguratorStore = create<ConfiguratorState>((set) => ({
       animations: [],
       currentAnimationId: null,
       animationSpeed: 1.0,
+      animationTime: 0,
+      isAnimationPlaying: false,
       isLoading: false,
     }),
 }));

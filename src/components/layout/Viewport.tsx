@@ -77,7 +77,7 @@ function ViewModeToolbar() {
     originalsRef.current.clear();
   };
 
-  const applyMode = (next: 'default' | 'wireframe' | 'normals' | 'flat') => {
+  const applyMode = (next: 'default' | 'wireframe') => {
     if (!scene) return;
     if (next === 'default') {
       restoreAll();
@@ -128,7 +128,7 @@ function ViewModeToolbar() {
   return (
     <div className="absolute top-3 right-3 z-20">
       <DropdownMenu>
-        <DropdownMenuTrigger>
+        <DropdownMenuTrigger asChild>
           <button
             className="p-2 rounded bg-card/80 border border-border text-sm hover:bg-card/90"
             title={mode === 'wireframe' ? 'Wireframe view' : 'Default view'}

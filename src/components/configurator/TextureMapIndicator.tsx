@@ -101,13 +101,14 @@ export function TextureMapIndicator({ material }: TextureMapIndicatorProps) {
             <DialogTitle className="flex items-center gap-3 text-lg">
               <Image className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               <span>{material.name}</span>
-              <span className="ml-auto text-sm font-normal text-muted-foreground">
-                {activeTextures.length} texture{activeTextures.length !== 1 ? 's' : ''}
-              </span>
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {/* Texture Count */}
+            <div className="text-sm text-muted-foreground">
+              {activeTextures.length} texture{activeTextures.length !== 1 ? 's' : ''} applied
+            </div>
             {/* Compact Grid Layout for All Texture Maps */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {activeTextures.map((texture) => (

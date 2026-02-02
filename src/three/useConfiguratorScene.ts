@@ -89,4 +89,19 @@ export function useConfiguratorScene() {
       mesh.ref.visible = mesh.visible;
     });
   }, [store.meshes, store]);
+
+  // Respond to explicit fit camera requests from the UI/store
+  useEffect(() => {
+    if (!store.scene) return;
+
+    // Run fit in next tick to ensure world matrices are up to date
+    setTimeout(() => {
+      const orbitControls = (camera as any)?.controls || (controls as any) || undefined;
+      if (orbitControls) {
+        ThreeUtils.fitCameraToObjects(camera as THREE.PerspectiveCamera, [store.scene as THREE.Group], orbitControls);
+      } else {
+        ThreeUtils.fitCameraToObjects(camera as THREE.PerspectiveCamera, [store.scene as THREE.Group]);
+      }
+    }, 50);
+  }, [store.fitCameraRequest, store.scene, camera, controls]);
 }

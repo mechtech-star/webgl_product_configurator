@@ -4,12 +4,29 @@
  */
 
 import { useConfiguratorStore } from '../../store/configurator.store';
-import { Play, Gauge } from 'lucide-react';
-import { Badge } from '../ui/badge';
-import { Label } from '../ui/label';
+import { Play, Pause } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Card, CardContent } from '../ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
 
 export function AnimationPanel() {
-  const { animations, currentAnimationId, animationSpeed, setCurrentAnimation, setAnimationSpeed } = useConfiguratorStore();
+  const {
+    animations,
+    currentAnimationId,
+    animationSpeed,
+    animationTime,
+    isAnimationPlaying,
+    setCurrentAnimation,
+    setAnimationSpeed,
+    setAnimationTime,
+    toggleAnimationPlayPause
+  } = useConfiguratorStore();
 
   if (animations.length === 0) {
     return (
@@ -23,77 +40,119 @@ export function AnimationPanel() {
 
   const handleAnimationChange = (animationId: string) => {
     setCurrentAnimation(animationId);
+    setAnimationTime(0);
   };
 
-  const handleSpeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const speed = parseFloat(e.target.value);
-    setAnimationSpeed(speed);
+  const handleSpeedChange = (speed: string) => {
+    setAnimationSpeed(parseFloat(speed));
   };
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const time = parseFloat(e.target.value);
+    setAnimationTime(time);
+  };
+
+  const handlePlayPause = () => {
+    // Ensure an animation is selected before playing
+    if (!currentAnimationId && animations.length > 0) {
+      setCurrentAnimation(animations[0].id);
+      setAnimationTime(0);
+    }
+
+    toggleAnimationPlayPause();
+  };
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    const milliseconds = Math.floor((time % 1) * 100);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
+  };
+
+  const speedOptions = [
+    { value: '0.25', label: '0.25x' },
+    { value: '0.5', label: '0.5x' },
+    { value: '0.75', label: '0.75x' },
+    { value: '1', label: '1x' },
+    { value: '1.25', label: '1.25x' },
+    { value: '1.5', label: '1.5x' },
+    { value: '2', label: '2x' },
+    { value: '3', label: '3x' },
+  ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-foreground flex items-center gap-2">
-          <Play className="w-4 h-4" />
-          Animations
-          <Badge variant="secondary">{animations.length}</Badge>
-        </h3>
-      </div>
-
-      {/* Animation Selector */}
-      <div className="space-y-2">
-        <Label htmlFor="animation-select" className="text-sm">Select Animation</Label>
-        <select
-          id="animation-select"
-          value={currentAnimationId || ''}
-          onChange={(e) => handleAnimationChange(e.target.value)}
-          className="w-full p-2 text-sm rounded-md border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          {animations.map((animation) => (
-            <option key={animation.id} value={animation.id}>
-              {animation.name} ({animation.duration.toFixed(2)}s)
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Current Animation Info */}
-      {currentAnimation && (
-        <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Current:</span>
-            <span className="text-sm font-semibold text-foreground">{currentAnimation.name}</span>
+    <Card>
+      <CardContent className="space-y-3">
+        {/* Row 1: Animation Selector + Speed */}
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <Select value={currentAnimationId || ''} onValueChange={handleAnimationChange}>
+              <SelectTrigger className="w-full h-8">
+                <SelectValue placeholder="Choose animation..." />
+              </SelectTrigger>
+              <SelectContent>
+                {animations.map((animation) => (
+                  <SelectItem key={animation.id} value={animation.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span>{animation.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Duration:</span>
-            <span className="text-sm text-foreground">{currentAnimation.duration.toFixed(2)}s</span>
+
+          <div className="flex items-end gap-1">
+            <Select value={animationSpeed.toString()} onValueChange={handleSpeedChange}>
+              <SelectTrigger className="w-16 h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {speedOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
-      )}
 
-      {/* Playback Controls */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm flex items-center gap-2">
-            <Gauge className="w-4 h-4" />
-            Speed: {animationSpeed.toFixed(2)}x
-          </Label>
-        </div>
-        <input
-          type="range"
-          min="0.1"
-          max="3"
-          step="0.1"
-          value={animationSpeed}
-          onChange={handleSpeedChange}
-          className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-muted accent-primary"
-        />
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>0.1x</span>
-          <span>1.0x</span>
-          <span>3.0x</span>
-        </div>
-      </div>
-    </div>
+        {/* Row 2: Play/Pause + Timeline */}
+        {currentAnimation && (
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handlePlayPause}
+              disabled={!currentAnimationId}
+              size="sm"
+              variant="outline"
+              className="w-8 h-8 p-0 flex-shrink-0"
+            >
+              {isAnimationPlaying ? (
+                <Pause className="w-4 h-4" />
+              ) : (
+                <Play className="w-4 h-4" />
+              )}
+            </Button>
+
+            <div className="flex-1 space-y-1">
+              <input
+                type="range"
+                min="0"
+                max={currentAnimation.duration}
+                step="0.01"
+                value={animationTime}
+                onChange={handleTimeChange}
+                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-muted accent-primary"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground px-0.5">
+                <span>{formatTime(animationTime)}</span>
+                <span>{formatTime(currentAnimation.duration)}</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

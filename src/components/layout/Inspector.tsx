@@ -3,6 +3,8 @@
  * Right sidebar with model info and controls
  */
 
+import { useMemo } from 'react';
+import * as THREE from 'three';
 import {
     Accordion,
     AccordionContent,
@@ -17,6 +19,31 @@ import { AnimationPanel } from '../configurator/AnimationPanel';
 export function Inspector() {
     const store = useConfiguratorStore();
 
+    const modelStats = useMemo(() => {
+        if (!store.scene) return { nodes: 0, vertices: 0, triangles: 0, drawCalls: 0 };
+
+        let nodes = 0;
+        let vertices = 0;
+        let triangles = 0;
+
+        store.scene.traverse((child) => {
+            nodes++;
+            if (child instanceof THREE.Mesh && child.geometry) {
+                const geom = child.geometry;
+                vertices += geom.attributes.position.count;
+                if (geom.index) {
+                    triangles += geom.index.count / 3;
+                } else {
+                    triangles += geom.attributes.position.count / 3;
+                }
+            }
+        });
+
+        const drawCalls = store.meshes.length; // Approximation: each mesh is a draw call
+
+        return { nodes, vertices, triangles: Math.floor(triangles), drawCalls };
+    }, [store.scene, store.meshes]);
+
     return (
         <div className="w-90 bg-card overflow-y-auto rounded-lg shadow-lg p-4">
             <Accordion type="single" collapsible defaultValue="info">
@@ -27,37 +54,37 @@ export function Inspector() {
                     </AccordionTrigger>
                     <AccordionContent>
                         <div className="space-y-3 px-4">
-                            <div>
-                                <p className="text-xs text-muted-foreground uppercase">Model Name</p>
-                                <p className="text-sm font-medium text-foreground">
-                                    {store.modelName || 'No model loaded'}
-                                </p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-xs text-muted-foreground uppercase">Triangles</p>
+                                    <p className="text-2xl font-bold text-foreground">
+                                        {modelStats.triangles.toLocaleString()}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <p className="text-xs text-muted-foreground uppercase">Vertices</p>
+                                    <p className="text-2xl font-bold text-foreground">
+                                        {modelStats.vertices.toLocaleString()}
+                                    </p>
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-xs text-muted-foreground uppercase">Meshes</p>
+                                    <p className="text-xs text-muted-foreground uppercase">Draw Calls</p>
                                     <p className="text-2xl font-bold text-foreground">
-                                        {store.meshes.length}
+                                        {modelStats.drawCalls}
                                     </p>
                                 </div>
 
                                 <div>
-                                    <p className="text-xs text-muted-foreground uppercase">Materials</p>
+                                    <p className="text-xs text-muted-foreground uppercase">Nodes</p>
                                     <p className="text-2xl font-bold text-foreground">
-                                        {store.materials.length}
+                                        {modelStats.nodes}
                                     </p>
                                 </div>
                             </div>
-
-                            {store.animations.length > 0 && (
-                                <div>
-                                    <p className="text-xs text-muted-foreground uppercase">Animations</p>
-                                    <p className="text-2xl font-bold text-foreground">
-                                        {store.animations.length}
-                                    </p>
-                                </div>
-                            )}
                         </div>
                     </AccordionContent>
                 </AccordionItem>

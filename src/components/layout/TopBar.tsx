@@ -28,8 +28,8 @@ export function TopBar() {
   };
 
   const handleFitCamera = () => {
-    // This will be handled by a future R3F integration
-    console.log('Fit camera to model');
+    // Request the scene hook to fit the camera to the loaded model
+    store.requestFitCamera?.();
   };
 
   return (

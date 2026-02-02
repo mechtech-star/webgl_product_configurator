@@ -5,7 +5,6 @@
 
 import { useConfiguratorStore } from '../../store/configurator.store';
 import { VisibilityToggle } from './VisibilityToggle';
-import { Separator } from '../ui/separator';
 
 export function MeshPanel() {
   const store = useConfiguratorStore();
@@ -19,16 +18,15 @@ export function MeshPanel() {
   }
 
   return (
-    <div className="space-y-2">
-      {store.meshes.map((mesh, idx) => (
+    <div>
+      {store.meshes.map((mesh) => (
         <div key={mesh.id}>
-          <div className="flex items-center justify-between px-4 py-2 hover:bg-muted rounded">
+          <div className="flex items-center justify-between px-3 py-0.5 hover:bg-muted rounded-md">
             <span className="text-sm font-medium text-foreground truncate flex-1">
               {mesh.name}
             </span>
             <VisibilityToggle meshId={mesh.id} isVisible={mesh.visible} />
           </div>
-          {idx < store.meshes.length - 1 && <Separator />}
         </div>
       ))}
     </div>

@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import { useConfiguratorStore } from '../store/configurator.store';
 
 export function useAnimationMixer() {
-  const { scene, animations, currentAnimationId, animationSpeed } = useConfiguratorStore();
+  const { scene, animations, currentAnimationId, animationSpeed, isAnimationPlaying, animationTime, setAnimationTime } = useConfiguratorStore();
   const mixerRef = useRef<THREE.AnimationMixer | null>(null);
   const currentActionRef = useRef<THREE.AnimationAction | null>(null);
 
@@ -53,7 +53,11 @@ export function useAnimationMixer() {
     const action = mixerRef.current.clipAction(animation.clip);
     action.reset();
     action.fadeIn(0.5);
+    action.loop = THREE.LoopRepeat;
+    action.repetitions = Infinity;
     action.play();
+    // Respect the current play/pause state
+    action.paused = !isAnimationPlaying;
     currentActionRef.current = action;
 
     return () => {
@@ -61,7 +65,7 @@ export function useAnimationMixer() {
         currentActionRef.current.fadeOut(0.5);
       }
     };
-  }, [currentAnimationId, animations]);
+  }, [currentAnimationId, animations, isAnimationPlaying]);
 
   // Update animation speed
   useEffect(() => {
@@ -70,10 +74,33 @@ export function useAnimationMixer() {
     }
   }, [animationSpeed]);
 
+  // Control play/pause
+  useEffect(() => {
+    if (!currentActionRef.current) return;
+
+    if (isAnimationPlaying) {
+      currentActionRef.current.paused = false;
+    } else {
+      currentActionRef.current.paused = true;
+    }
+  }, [isAnimationPlaying]);
+
+  // Update animation time when slider changes (apply immediately so scrubbing works while playing)
+  useEffect(() => {
+    if (currentActionRef.current) {
+      currentActionRef.current.time = animationTime;
+    }
+  }, [animationTime]);
+
   // Update mixer on each frame
   useFrame((_, delta) => {
     if (mixerRef.current) {
       mixerRef.current.update(delta);
+    }
+
+    // Update animation time in store during playback
+    if (currentActionRef.current && isAnimationPlaying) {
+      setAnimationTime(currentActionRef.current.time);
     }
   });
 

@@ -7,7 +7,8 @@ import { Canvas } from '@react-three/fiber';
 import { SceneSetup } from './SceneSetup';
 import { ModelLoader } from './ModelLoader';
 import { useTheme } from 'next-themes';
-import { useMemo } from 'react';
+import { useMemo, Suspense } from 'react';
+import { Environment } from '@react-three/drei';
 
 interface CanvasRootProps {
   className?: string;
@@ -73,13 +74,18 @@ export function CanvasRoot({ className }: CanvasRootProps) {
           alpha: true,
         }}
       >
-      {/* Scene configuration */}
-      <SceneSetup />
+      <Suspense fallback={null}>
+        {/* HDRI environment for studio-style product lighting */}
+        <Environment preset="studio" background={false} />
 
-      {/* Model loading logic */}
-      <ModelLoader />
+        {/* Scene configuration */}
+        <SceneSetup />
 
-        {/* Scene background handled by CSS radial gradient on container */}
+        {/* Model loading logic */}
+        <ModelLoader />
+      </Suspense>
+
+      {/* Scene background handled by CSS radial gradient on container */}
       </Canvas>
     </div>
   );
