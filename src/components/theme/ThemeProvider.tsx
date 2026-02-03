@@ -14,8 +14,8 @@ export function AppThemeProvider({ children }: ThemeProviderProps) {
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="system"
-      enableSystem
+      defaultTheme="dark"
+      enableSystem={false}
       enableColorScheme
       disableTransitionOnChange
     >
