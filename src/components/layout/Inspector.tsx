@@ -89,7 +89,8 @@ export function Inspector() {
 
                 // morph targets
                 if (geom.morphAttributes) {
-                    const mt = Object.values(geom.morphAttributes).reduce((acc: number, arr: any[]) => acc + arr.length, 0);
+                    const morphAttrs = Object.values(geom.morphAttributes) as any[];
+                    const mt = morphAttrs.reduce((acc: number, arr: any) => acc + (Array.isArray(arr) ? arr.length : 0), 0);
                     morphTargetCount += mt;
                 }
 
