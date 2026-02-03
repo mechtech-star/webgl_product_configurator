@@ -4,14 +4,18 @@
  */
 
 import { CanvasRoot } from '../../three/CanvasRoot';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useConfiguratorStore } from '../../store/configurator.store';
 import * as THREE from 'three';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
-import { Grid, Box } from 'lucide-react';
+import { Grid, Sun, Maximize2, Box } from 'lucide-react';
+import { Slider } from '../ui/slider';
 
 function ViewModeToolbar() {
-  const scene = useConfiguratorStore((s) => s.scene);
+  const store = useConfiguratorStore();
+  const scene = store.scene;
+  const hdriIntensity = (store as any).hdriIntensity ?? 1;
+  const setHdriIntensity = (store as any).setHdriIntensity ?? (() => { });
   const [mode, setMode] = useState<'default' | 'wireframe'>('default');
   const originalsRef = useRef<Map<string, THREE.Material | THREE.Material[]>>(new Map());
   const edgesRef = useRef<Map<string, THREE.Object3D>>(new Map());
@@ -125,12 +129,63 @@ function ViewModeToolbar() {
     setMode(next);
   };
 
+  // Apply HDRI intensity to all standard materials in the scene
+  const applyHdriIntensityToScene = (intensity: number) => {
+    if (!scene) return;
+    scene.traverse((obj) => {
+      if ((obj as any).isMesh) {
+        const mesh = obj as THREE.Mesh;
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        mats.forEach((m: any) => {
+          try {
+            if (m && m.isMeshStandardMaterial) {
+              m.envMapIntensity = intensity;
+              m.needsUpdate = true;
+            }
+          } catch (e) {
+            // ignore
+          }
+        });
+      }
+    });
+  };
+
+  useEffect(() => {
+    applyHdriIntensityToScene(hdriIntensity);
+  }, [scene, hdriIntensity]);
+
   return (
-    <div className="absolute top-3 right-3 z-20">
+    <div className="absolute top-3 right-3 z-20 flex gap-2">
+      <div className="flex items-center gap-2 px-2 bg-card/70 rounded-md border border-border py-1">
+        <Sun className="w-4 h-4 text-muted-foreground" />
+
+        <div className="w-40">
+          <Slider
+            min={0}
+            max={2}
+            step={0.01}
+            value={[Number(hdriIntensity ?? 1)]}
+            onValueChange={(vals: number[]) => {
+              const v = Number(vals[0] ?? 1);
+              setHdriIntensity(v);
+              applyHdriIntensityToScene(v);
+            }}
+          />
+        </div>
+      </div>
+      <button
+        className="p-2 rounded-md bg-card/80 border border-border text-sm hover:bg-card/90"
+        onClick={() => store.requestFitCamera()}
+        title="Fit camera to model"
+        aria-label="Fit camera"
+      >
+        <Maximize2 className="w-4 h-4" />
+      </button>
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            className="p-2 rounded bg-card/80 border border-border text-sm hover:bg-card/90"
+            className="p-2 rounded-md bg-card/80 border border-border text-sm hover:bg-card/90"
             title={mode === 'wireframe' ? 'Wireframe view' : 'Default view'}
             aria-label="View options"
           >

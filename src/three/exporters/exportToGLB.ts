@@ -14,8 +14,20 @@ export class GLBExporter {
     return new Promise((resolve, reject) => {
       const exporter = new GLTFExporter();
 
+      // Clone scene so we can remove hidden objects without mutating original
+      const sceneClone = scene.clone(true) as THREE.Group;
+
+      // Collect nodes that are explicitly invisible and remove them from the clone
+      const toRemove: THREE.Object3D[] = [];
+      sceneClone.traverse((node) => {
+        if (node !== sceneClone && node.visible === false) {
+          toRemove.push(node);
+        }
+      });
+      toRemove.forEach((node) => node.parent && node.parent.remove(node));
+
       exporter.parse(
-        scene,
+        sceneClone,
         (result: any) => {
           if (result instanceof ArrayBuffer) {
             resolve(new Blob([result], { type: 'model/gltf-binary' }));

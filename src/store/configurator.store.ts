@@ -37,6 +37,8 @@ export interface ConfiguratorState {
   animationTime: number;
   isAnimationPlaying: boolean;
   isLoading: boolean;
+  // HDRI / environment intensity for studio lighting
+  hdriIntensity: number;
   // Fit camera request trigger (increment to request a fit)
   fitCameraRequest: number;
 
@@ -53,6 +55,7 @@ export interface ConfiguratorState {
   toggleAnimationPlayPause: () => void;
   setAnimationTime: (time: number) => void;
   setIsLoading: (loading: boolean) => void;
+  setHdriIntensity: (intensity: number) => void;
   requestFitCamera: () => void;
   toggleMeshVisibility: (meshId: string) => void;
   setMaterialColor: (materialId: string, color: string) => void;
@@ -73,6 +76,8 @@ export const useConfiguratorStore = create<ConfiguratorState>((set) => ({
   isAnimationPlaying: false,
   isLoading: false,
   fitCameraRequest: 0,
+  // default HDRI intensity
+  hdriIntensity: 1.0,
 
   // Actions
   setModelUrl: (url, name) =>
@@ -138,6 +143,11 @@ export const useConfiguratorStore = create<ConfiguratorState>((set) => ({
   setIsLoading: (loading) =>
     set({
       isLoading: loading,
+    }),
+
+  setHdriIntensity: (intensity) =>
+    set({
+      hdriIntensity: intensity,
     }),
 
   requestFitCamera: () =>

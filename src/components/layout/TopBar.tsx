@@ -7,7 +7,7 @@ import { useConfiguratorStore } from '../../store/configurator.store';
 import { GLBExporter } from '../../three/exporters/exportToGLB';
 import { ThemeSwitcher } from '../theme/ThemeSwitcher';
 import { Button } from '../ui/button';
-import { RotateCcw, Download, Upload, Maximize2 } from 'lucide-react';
+import { Package, Upload } from 'lucide-react';
 
 export function TopBar() {
   const store = useConfiguratorStore();
@@ -27,11 +27,6 @@ export function TopBar() {
     }
   };
 
-  const handleFitCamera = () => {
-    // Request the scene hook to fit the camera to the loaded model
-    store.requestFitCamera?.();
-  };
-
   return (
     <div className="rounded-lg bg-card px-6 py-3 flex items-center justify-between shadow-lg">
       <div className="flex items-center gap-2">
@@ -49,10 +44,10 @@ export function TopBar() {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={handleFitCamera}
-                title="Fit camera to model"
+                onClick={handleReset}
+                title="Reset to empty state"
               >
-                <Maximize2 className="w-4 h-4" />
+                Open New 3D Model
               </Button>
 
               <Button
@@ -60,17 +55,10 @@ export function TopBar() {
                 variant="outline"
                 onClick={handleExport}
                 title="Export as GLB"
+                className='gap-2 flex items-center'
               >
-                <Download className="w-4 h-4" />
-              </Button>
-
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleReset}
-                title="Reset to empty state"
-              >
-                <RotateCcw className="w-4 h-4" />
+                Export and go
+                <Package className="w-4 h-4" />
               </Button>
             </div>
           </>
